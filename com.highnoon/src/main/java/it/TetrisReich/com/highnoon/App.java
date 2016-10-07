@@ -1,6 +1,8 @@
 package it.TetrisReich.com.highnoon;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -27,24 +29,45 @@ public class App{
     public static void main(String[] args) throws IOException{
     	TelegramBot bot = TelegramBotAdapter.build(reader("token"));
     	String chat = reader("chat");
-    	try{
-    		if(args[0].equalsIgnoreCase("-l")) c = "/";
-    	}catch (ArrayIndexOutOfBoundsException e) {}
-    	boolean b = true;
-    	for(int i=0;i<n.length;i++){
-    		utils(i);
+    	byte v = 0;
+    	for (String s: args) {
+    		if(s.equalsIgnoreCase("-l")) c = "/";
+    		if(s.equals("2")) v = 1;
+     	}
+		boolean b = true;
+    	if(v==0){
+    		for(int i=0;i<n.length;i++){
+    			utils(i);
+    		}
+    		System.out.println("Startup done");
+    		while(true){
+    			System.out.print("Checking date ("+time("HHmm")+"): ");
+    			if(highNoon(Integer.parseInt(time("HHmm")))){if(b){
+    				SendResponse sp = bot.execute(new SendMessage(chat, "*It's hiiiiiiigh noon*"
+    						+ "\n_In " + s[tInt] + "._").parseMode(ParseMode.Markdown));
+    				utils(tInt);
+    				b = false;
+    				System.out.println("true.\n" + sp.toString());}
+    			} else {b = true; System.out.println("false");}
+    			wait(5000);
+    		}
     	}
-    	System.out.println("Startup done");
-    	while(true){
-    		System.out.print("Checking date ("+time("HHmm")+"): ");
-    		if(highNoon(Integer.parseInt(time("HHmm")))){if(b){
-    			SendResponse sp = bot.execute(new SendMessage(chat, "*It's hiiiiiiigh noon*"
-    					+ "\n_In " + s[tInt] + "._").parseMode(ParseMode.Markdown));
-    			utils(tInt);
-        		b = false;
-        		System.out.println("true.\n" + sp.toString());}
-    		} else {b = true; System.out.println("false");}
-    		wait(5000);
+    	if(v==1){
+    		while(true){
+    			String time = time("HHmm");
+    			System.out.print("Checking date ("+time+"): ");
+    			//System.out.println(exist(time) + time);
+    			if(exist("city" + c + time)){if(b){
+    				String[] f = aL("city" + c + time, false).split(";");
+    				SendResponse sp = bot.execute(new SendMessage(chat, "*It's hiiiiiiigh noon*"
+    						+ "\n_In " + f[random(f.length - 1) + 1] + " (" + f[0] + ")._")
+    						.parseMode(ParseMode.Markdown));
+    				b = false;
+    				System.out.println("true.\n" + sp.toString());
+    				}				
+    			} else {b = true; System.out.println("false");}
+    			wait(20000);
+    		}
     	}
     }
     public static String reader(String path) throws IOException{
@@ -91,4 +114,21 @@ public class App{
     	System.out.println(Arrays.toString(s));
     	System.out.println(Arrays.toString(t));
 	}
+    public static boolean exist(String path){
+    	File f = new File(path);
+    	if(f.exists() && !f.isDirectory()) return true;
+    	return false;
+    }
+    public static String aL(String path, boolean slashN) throws FileNotFoundException, IOException{
+	    String ret = "";
+	    String accapo = "";
+	    if(slashN) accapo = "\n";
+    	try (BufferedReader br = new BufferedReader(new FileReader(path))) {
+    	    String line;
+    	    while ((line = br.readLine()) != null) {
+    	       ret += line + accapo;
+    	    }
+    	}
+    	return ret;
+    }
 }
